@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -10,7 +12,7 @@ android {
     namespace = "com.apkidemand.app"
     compileSdk = 34
 
-    val properties = java.util.Properties()
+    val properties = Properties()
     val localPropertiesFile = project.rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
         properties.load(localPropertiesFile.inputStream())
