@@ -3,13 +3,16 @@ package com.apkidemand.feature.home
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,7 +23,7 @@ enum class BottomTab(
     val outlinedIcon: ImageVector
 ) {
     Feed("Feed", Icons.Filled.Home, Icons.Outlined.Home),
-    Post("Post", Icons.Filled.AddCircle, Icons.Outlined.AddCircle),
+    Demand("Demand", Icons.Filled.AddCircle, Icons.Outlined.AddCircleOutline),
     Chats("Chats", Icons.Filled.ChatBubble, Icons.Outlined.ChatBubbleOutline),
     Profile("Profile", Icons.Filled.Person, Icons.Outlined.Person)
 }
@@ -35,6 +38,18 @@ fun MainShell(
     var currentTab by rememberSaveable { mutableStateOf(BottomTab.Feed) }
 
     Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToPost,
+                shape = CircleShape,
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = Color.White,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Post Demand", modifier = Modifier.size(28.dp))
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Center,
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -45,8 +60,9 @@ fun MainShell(
                     NavigationBarItem(
                         selected = isSelected,
                         onClick = {
-                            if (tab == BottomTab.Post) {
-                                onNavigateToPost()
+                            if (tab == BottomTab.Demand) {
+                                // Currently acts as a placeholder or goes to My Demands. We'll set it as active tab
+                                currentTab = tab
                             } else {
                                 currentTab = tab
                             }
@@ -74,9 +90,7 @@ fun MainShell(
                         },
                         label = {
                             Text(
-                                text = if (tab == BottomTab.Post) {
-                                    if (userRole == "buyer") "Demand" else "Offer"
-                                } else tab.label,
+                                text = tab.label,
                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                             )
                         },
@@ -98,10 +112,21 @@ fun MainShell(
                     if (userRole == "buyer") {
                         BuyerFeedScreen()
                     } else {
-                        SellerFeedScreen()
+                        SellerDashboardScreen(
+                            onNavigateToLeads = { currentTab = BottomTab.Demand },
+                            onNavigateToActiveOffers = { currentTab = BottomTab.Demand }
+                        )
                     }
                 }
-                BottomTab.Post -> { /* Handled by onNavigateToPost */ }
+                BottomTab.Demand -> {
+                    if (userRole == "buyer") {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("My Demands Screen")
+                        }
+                    } else {
+                        SellerFeedScreen() // Seller sees leads (demands) here
+                    }
+                }
                 BottomTab.Chats -> ChatsScreen(userRole = userRole, onChatClick = onNavigateToChatDetail)
                 BottomTab.Profile -> ProfileScreen(userRole = userRole, onLogout = onLogout)
             }

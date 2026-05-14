@@ -53,6 +53,7 @@ val categoryFilters = listOf(
 )
 
 // ── Sample Offers (shown to Buyers) ───────────────────────
+// TODO: DEMO DATA - Do not use in production. Ensure UI uses real data from Firestore.
 val sampleOffers = listOf(
     OfferItem("o1", "Rajesh Silks", "RS", "Rajesh G.", "Banarasi Silk Saree Collection", "Pure silk sarees in all colors, zari work, wedding special. Walk-in & delivery available.", "Fashion", "👗", 4500, 6000, "Negotiable", false, "Rajapeth", "Amravati", "0.8 km", 4.5, 128, "https://images.unsplash.com/photo-1610189013233-030cdb46a2ee?auto=format&fit=crop&q=80&w=400", "1h ago", true),
     OfferItem("o2", "TechZone Mobiles", "TZ", "Vikram S.", "iPhone Cases & Accessories", "Premium silicon, leather & rugged cases. All models available. Same-day delivery.", "Electronics", "📱", 299, 599, "20% OFF", false, "Camp Area", "Amravati", "1.2 km", 4.2, 96, "https://images.unsplash.com/photo-1603313011101-320f26a4f6f6?auto=format&fit=crop&q=80&w=400", "3h ago", true),
@@ -63,6 +64,7 @@ val sampleOffers = listOf(
 )
 
 // ── Sample Demands (shown to Sellers) ─────────────────────
+// TODO: DEMO DATA - Do not use in production. Ensure UI uses real data from Firestore.
 val sampleDemands = listOf(
     DemandItem("d1", "Red Banarasi Silk Saree", "Looking for pure Banarasi silk in maroon/red with gold zari work for wedding", "Fashion", "👗", "Priya S.", "PS", "Rajapeth", "Amravati", 3000, 8000, 5, true, "2h ago", 2),
     DemandItem("d2", "iPhone 14 Back Cover", "Need a transparent silicon case for iPhone 14, anti-yellow preferred", "Electronics", "📱", "Rahul K.", "RK", "Camp Area", "Amravati", 200, 500, 3, false, "4h ago", 1),

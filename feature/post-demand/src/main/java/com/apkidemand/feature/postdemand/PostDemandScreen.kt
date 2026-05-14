@@ -35,6 +35,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.apkidemand.feature.postdemand.presentation.PostDemandViewModel
 
 data class CategoryOption(val name: String, val emoji: String)
 
@@ -48,8 +50,10 @@ private val categories = listOf(
 
 private val radiusOptions = listOf(1, 3, 5, 10)
 
+
 @Composable
 fun PostDemandScreen(
+    viewModel: PostDemandViewModel = hiltViewModel(),
     userRole: String = "buyer",
     onBack: () -> Unit,
     onPosted: () -> Unit
@@ -62,7 +66,17 @@ fun PostDemandScreen(
     var selectedRadius by remember { mutableIntStateOf(5) }
     var isUrgent by remember { mutableStateOf(false) }
 
-    val isValid = title.length >= 3 && description.length >= 10 && selectedCategory != null
+    val isPosting by viewModel.isPosting.collectAsState()
+    val postResult by viewModel.postResult.collectAsState()
+
+    LaunchedEffect(postResult) {
+        if (postResult?.isSuccess == true) {
+            viewModel.resetState()
+            onPosted()
+        }
+    }
+
+    val isValid = title.length >= 3 && description.length >= 10 && selectedCategory != null && !isPosting
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -78,17 +92,27 @@ fun PostDemandScreen(
                     tween(300), label = "btnColor"
                 )
                 Button(
-                    onClick = { if (isValid) onPosted() },
+                    onClick = { 
+                        if (isValid) {
+                            val budget = budgetMax.toIntOrNull() ?: 0
+                            viewModel.postDemand(title, description, selectedCategory!!, budget, isUrgent, emptyList())
+                        } 
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = btnColor),
-                    elevation = ButtonDefaults.buttonElevation(0.dp)
+                    elevation = ButtonDefaults.buttonElevation(0.dp),
+                    enabled = isValid
                 ) {
-                    Icon(Icons.Filled.Send, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Post Demand", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    if (isPosting) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Icon(Icons.Filled.Send, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Post Demand", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }

@@ -27,11 +27,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.apkidemand.feature.home.presentation.ProfileViewModel
+
 @Composable
 fun ProfileScreen(
+    viewModel: ProfileViewModel = hiltViewModel(),
     userRole: String,
     onLogout: () -> Unit = {}
 ) {
+    val userProfile by viewModel.userProfile.collectAsState()
+    val myDemands by viewModel.myDemands.collectAsState()
+    val myOffers by viewModel.myOffers.collectAsState()
+
     val isBuyer = userRole == "buyer"
 
     LazyColumn(
@@ -75,16 +83,19 @@ fun ProfileScreen(
                     modifier = Modifier.padding(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Avatar
+                    val displayName = userProfile?.name?.ifEmpty { "User" } ?: "Loading..."
+                    val initials = if (displayName != "Loading..." && displayName.length > 1) displayName.take(2).uppercase() else "U"
+                    val city = userProfile?.city?.ifEmpty { "Location not set" } ?: "Location not set"
+
                     Box(modifier = Modifier.size(80.dp)) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(CircleShape)
-                                .background(Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFF3B82F6)))),
+                                .background(MaterialTheme.colorScheme.primary),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("RS", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(initials, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                         // Edit Badge
                         Box(
@@ -104,7 +115,7 @@ fun ProfileScreen(
                     Spacer(Modifier.width(20.dp))
 
                     Column {
-                        Text("Rahul Sharma", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text(displayName, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
                         Spacer(Modifier.height(6.dp))
                         
                         // Badge
@@ -116,9 +127,9 @@ fun ProfileScreen(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Filled.ShoppingCart, "Buyer", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(12.dp))
+                                Icon(Icons.Filled.ShoppingCart, "Role", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(12.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Buyer", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                Text(userRole.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                             }
                         }
                         
@@ -126,15 +137,15 @@ fun ProfileScreen(
                         
                         // Contact Info
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Filled.Email, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("+91 98765 43210", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(userProfile?.email ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Spacer(Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.LocationOn, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Amravati, Maharashtra", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(city, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -150,16 +161,16 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 StatCardV(
-                    count = "12", label = "Demands\nPosted", icon = Icons.Filled.Description,
+                    count = myDemands.size.toString(), label = "Demands\nPosted", icon = Icons.Filled.Description,
                     tintColor = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f)
                 )
                 StatCardV(
-                    count = "34", label = "Offers\nReceived", icon = Icons.Filled.ShoppingBag,
-                    tintColor = Color(0xFFF59E0B), modifier = Modifier.weight(1f)
+                    count = myOffers.size.toString(), label = "Offers\nSubmitted", icon = Icons.Filled.ShoppingBag,
+                    tintColor = MaterialTheme.colorScheme.secondary, modifier = Modifier.weight(1f)
                 )
                 StatCardV(
-                    count = "8", label = "Deals\nFinalized", icon = Icons.Filled.CheckCircle,
-                    tintColor = Color(0xFF10B981), modifier = Modifier.weight(1f)
+                    count = "0", label = "Deals\nFinalized", icon = Icons.Filled.CheckCircle,
+                    tintColor = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -174,7 +185,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("My Demands", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+                Text(if (isBuyer) "My Demands" else "My Offers", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { }) {
                     Text("View All", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(4.dp))
@@ -183,71 +194,114 @@ fun ProfileScreen(
             }
         }
 
-        items(3) { index ->
-            val titles = listOf("Red Banarasi Silk Saree", "iPhone 14 Back Cover", "Birthday Cake 2kg")
-            val offers = listOf("4 offers received", "6 offers received", "8 offers received")
-            val statuses = listOf("Active", "Finalized", "Expired")
-            val statusColors = listOf(Color(0xFF10B981), MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurfaceVariant)
-            val imageUrls = listOf(
-                "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=150",
-                "https://images.unsplash.com/photo-1603313011101-320f26a4f6f6?auto=format&fit=crop&q=80&w=150",
-                "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=150"
-            )
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
-                    .clickable { },
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Image
-                    Box(
+        if (isBuyer) {
+            if (myDemands.isEmpty()) {
+                item {
+                    Text("No demands posted yet.", modifier = Modifier.padding(20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                items(myDemands.size) { index ->
+                    val demand = myDemands[index]
+                    Card(
                         modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 6.dp)
+                            .clickable { },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
-                        AsyncImage(
-                            model = imageUrls[index],
-                            contentDescription = titles[index],
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    Spacer(Modifier.width(16.dp))
-
-                    // Text
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(titles[index], fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Spacer(Modifier.height(4.dp))
-                        Text(offers[index], style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-
-                    Spacer(Modifier.width(12.dp))
-
-                    // Badge & Chevron
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = statusColors[index].copy(alpha = 0.15f)
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = statuses[index],
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                color = statusColors[index]
-                            )
+                            // Image
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                            ) {
+                                AsyncImage(
+                                    model = demand.imageUrls.firstOrNull() ?: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=150",
+                                    contentDescription = demand.title,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+
+                            Spacer(Modifier.width(16.dp))
+
+                            // Text
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(demand.title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Spacer(Modifier.height(4.dp))
+                                Text("${demand.offerCount} offers received", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+
+                            Spacer(Modifier.width(12.dp))
+
+                            // Badge & Chevron
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = "Active",
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Icon(Icons.Filled.ChevronRight, "Go", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                            }
                         }
-                        Spacer(Modifier.width(12.dp))
-                        Icon(Icons.Filled.ChevronRight, "Go", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                    }
+                }
+            }
+        } else {
+            if (myOffers.isEmpty()) {
+                item {
+                    Text("No offers submitted yet.", modifier = Modifier.padding(20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                items(myOffers.size) { index ->
+                    val offer = myOffers[index]
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 6.dp)
+                            .clickable { },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                            ) {
+                                AsyncImage(
+                                    model = offer.imageUrls.firstOrNull() ?: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=150",
+                                    contentDescription = offer.title,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            Spacer(Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(offer.title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Spacer(Modifier.height(4.dp))
+                                Text("₹${offer.price}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
                     }
                 }
             }

@@ -25,6 +25,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.apkidemand.feature.auth.presentation.AuthState
+import com.apkidemand.feature.auth.presentation.AuthViewModel
 
 data class RoleOption(
     val id: String,
@@ -44,9 +47,11 @@ private val cities = listOf(
     "Jalgaon", "Sangli", "Wardha", "Chandrapur", "Yavatmal"
 )
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileSetupScreen(
+    viewModel: AuthViewModel = hiltViewModel(),
     onComplete: (role: String) -> Unit,
     onBack: () -> Unit
 ) {
@@ -54,6 +59,17 @@ fun ProfileSetupScreen(
     var selectedCity by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf("buyer") }
     var cityDropdownExpanded by remember { mutableStateOf(false) }
+
+    val authState by viewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            val role = (authState as AuthState.Success).role
+            if (role != null) {
+                onComplete(role)
+            }
+        }
+    }
 
     val isValid = displayName.length >= 2 && selectedCity.isNotEmpty()
 
@@ -85,7 +101,7 @@ fun ProfileSetupScreen(
                     .clip(CircleShape)
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFF6C5CE7), Color(0xFF5A4BD1))
+                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
                         )
                     ),
                 contentAlignment = Alignment.Center
@@ -111,6 +127,17 @@ fun ProfileSetupScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            if (authState is AuthState.Error) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = (authState as AuthState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             // Name
@@ -127,9 +154,9 @@ fun ProfileSetupScreen(
                     imeAction = ImeAction.Next
                 ),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF6C5CE7),
-                    focusedLabelColor = Color(0xFF6C5CE7),
-                    cursorColor = Color(0xFF6C5CE7)
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 
@@ -151,8 +178,8 @@ fun ProfileSetupScreen(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cityDropdownExpanded) },
                     shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF6C5CE7),
-                        focusedLabelColor = Color(0xFF6C5CE7)
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
                     )
                 )
                 ExposedDropdownMenu(
@@ -186,7 +213,7 @@ fun ProfileSetupScreen(
                 roles.forEach { role ->
                     val isSelected = selectedRole == role.id
                     val borderColor by animateColorAsState(
-                        if (isSelected) Color(0xFF6C5CE7) else MaterialTheme.colorScheme.outline,
+                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                         tween(200), label = "roleBorder"
                     )
 
@@ -200,7 +227,7 @@ fun ProfileSetupScreen(
                                 shape = RoundedCornerShape(16.dp)
                             )
                             .background(
-                                if (isSelected) Color(0xFF6C5CE7).copy(alpha = 0.08f)
+                                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
                                 else MaterialTheme.colorScheme.surface
                             )
                             .clickable { selectedRole = role.id }
@@ -213,7 +240,7 @@ fun ProfileSetupScreen(
                             text = role.title,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            color = if (isSelected) Color(0xFF6C5CE7)
+                            color = if (isSelected) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -231,19 +258,25 @@ fun ProfileSetupScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             val btnColor by animateColorAsState(
-                if (isValid) Color(0xFF6C5CE7) else Color(0xFFD1D5DB),
+                if (isValid) MaterialTheme.colorScheme.primary else Color(0xFFD1D5DB),
                 tween(300), label = "btnColor"
             )
             Button(
-                onClick = { if (isValid) onComplete(selectedRole) },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                onClick = { if (isValid) viewModel.saveProfile(selectedRole, displayName, selectedCity) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = btnColor, contentColor = Color.White),
                 elevation = ButtonDefaults.buttonElevation(if (isValid) 6.dp else 0.dp)
             ) {
-                Icon(Icons.Filled.Check, null, Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Complete Setup", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                if (authState is AuthState.Loading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Icon(Icons.Filled.Check, null, Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Complete Setup", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }

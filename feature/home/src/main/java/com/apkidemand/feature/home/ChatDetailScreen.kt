@@ -29,12 +29,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.apkidemand.feature.home.presentation.ChatViewModel
+
 
 @Composable
 fun ChatDetailScreen(
+    viewModel: ChatViewModel = hiltViewModel(),
     chatId: String,
     onBack: () -> Unit
 ) {
+    LaunchedEffect(chatId) {
+        viewModel.fetchMessages(chatId)
+    }
+    
+    val messages by viewModel.messages.collectAsState()
     var messageText by remember { mutableStateOf("") }
 
     Scaffold(
@@ -42,13 +51,18 @@ fun ChatDetailScreen(
         contentWindowInsets = WindowInsets(0.dp),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            ChatHeader(onBack = onBack)
+            ChatHeader(chatId = chatId, onBack = onBack)
         },
         bottomBar = {
             ChatInputBar(
                 text = messageText,
                 onTextChange = { messageText = it },
-                onSend = { messageText = "" }
+                onSend = { 
+                    if (messageText.isNotBlank()) {
+                        viewModel.sendMessage(chatId, messageText)
+                        messageText = "" 
+                    }
+                }
             )
         }
     ) { padding ->
@@ -140,7 +154,7 @@ fun ChatDetailScreen(
 }
 
 @Composable
-private fun ChatHeader(onBack: () -> Unit) {
+private fun ChatHeader(chatId: String, onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,7 +173,7 @@ private fun ChatHeader(onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFF3B82F6)))),
+                    .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
                 Text("RS", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -171,7 +185,7 @@ private fun ChatHeader(onBack: () -> Unit) {
                     .offset(x = 2.dp, y = 2.dp)
                     .size(12.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF10B981))
+                    .background(MaterialTheme.colorScheme.primary)
                     .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
             )
         }
@@ -184,7 +198,7 @@ private fun ChatHeader(onBack: () -> Unit) {
                 Spacer(Modifier.width(4.dp))
                 Icon(Icons.Filled.Verified, "Verified", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
             }
-            Text("Online", style = MaterialTheme.typography.labelSmall, color = Color(0xFF10B981))
+            Text("Online", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

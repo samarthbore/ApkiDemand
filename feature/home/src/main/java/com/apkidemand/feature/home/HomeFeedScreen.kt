@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,19 +31,50 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.apkidemand.feature.home.presentation.HomeViewModel
 
 // ═══════════════════════════════════════════════════════════
 //  BUYER FEED — Shows seller offers/deals nearby
 // ═══════════════════════════════════════════════════════════
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuyerFeedScreen(
+    viewModel: HomeViewModel = hiltViewModel(),
     onOfferClick: (String) -> Unit = {}
 ) {
     var selectedCategory by remember { mutableStateOf("All") }
-    val filtered = if (selectedCategory == "All") sampleOffers
-    else sampleOffers.filter { it.category == selectedCategory }
+    val offers by viewModel.offers.collectAsState()
+    
+    val mappedOffers = offers.map { entity ->
+        OfferItem(
+            id = entity.id,
+            shopName = entity.shopName,
+            shopInitials = entity.shopInitials,
+            sellerName = "Seller",
+            title = entity.title,
+            description = entity.description,
+            category = "Fashion", // Hardcoded for this specific app niche
+            categoryEmoji = "👗",
+            price = entity.price,
+            originalPrice = null,
+            discountBadge = null,
+            isNegotiable = entity.isNegotiable,
+            areaName = "Local",
+            cityName = "City",
+            distance = "Nearby",
+            rating = 4.5,
+            totalOffers = 10,
+            imageUrl = entity.imageUrls.firstOrNull() ?: "https://images.unsplash.com/photo-1610189013233-030cdb46a2ee?auto=format&fit=crop&q=80&w=400",
+            timeAgo = "Just now",
+            isVerified = true
+        )
+    }
+
+    val filtered = if (selectedCategory == "All") mappedOffers
+    else mappedOffers.filter { it.category == selectedCategory }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -71,10 +103,10 @@ fun BuyerFeedScreen(
                     Spacer(Modifier.width(12.dp))
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Amravati", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp), color = MaterialTheme.colorScheme.onBackground)
+                            Text("Your Location", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp), color = MaterialTheme.colorScheme.onBackground)
                             Icon(Icons.Filled.KeyboardArrowDown, "Change", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                         }
-                        Text("Rajapeth Area", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Local Area", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(4.dp))
                         Surface(
                             shape = RoundedCornerShape(10.dp),
@@ -138,16 +170,9 @@ fun BuyerFeedScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        )
-                    )
-                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
             ) {
                 Row(
                     modifier = Modifier
@@ -163,29 +188,29 @@ fun BuyerFeedScreen(
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.primary),
+                                .clip(CircleShape)
+                                .background(Color(0xFFEDE8FF)), // Light purple background for the bag icon like the image
                             contentAlignment = Alignment.Center
                         ) {
                             Text("✨", modifier = Modifier.align(Alignment.TopStart).padding(4.dp), fontSize = 10.sp)
-                            Icon(Icons.Filled.ShoppingBag, "Demand", tint = Color.White, modifier = Modifier.size(22.dp))
+                            Icon(Icons.Filled.ShoppingBag, "Demand", tint = Color(0xFF6C5CE7), modifier = Modifier.size(22.dp))
                         }
                         Spacer(Modifier.width(14.dp))
                         Column {
-                            Text("Post a demand, get best offers", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text("Post local shopkeepers in", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                             Spacer(Modifier.height(2.dp))
-                            Text("Shops near you will respond", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            Text("Busyland & nearby markets", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                         }
                     }
                     Spacer(Modifier.width(12.dp))
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.secondary // Gold color
                     ) {
                         Text(
-                            "+ Post Demand",
+                            "+ Post Your Demand",
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.onSecondary,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.sp
                         )
@@ -241,21 +266,26 @@ fun BuyerFeedScreen(
                     Text("Nearby Sellers", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp), color = MaterialTheme.colorScheme.onBackground)
                     Spacer(Modifier.width(12.dp))
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
-                        Text("${filtered.size} Active", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium), color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                        Text("${filtered.size} Active", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Sort by", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.width(6.dp))
-                    Row(
-                        modifier = Modifier.clickable { },
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
-                        Text("Popular", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.primary)
-                        Icon(Icons.Filled.KeyboardArrowDown, "Sort", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                        Row(
+                            modifier = Modifier.clickable { }.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Popular", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(Icons.Filled.KeyboardArrowDown, "Sort", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                        }
                     }
                 }
             }
@@ -275,14 +305,16 @@ fun OfferCardHorizontal(offer: OfferItem, onClick: () -> Unit, modifier: Modifie
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(modifier = Modifier.height(160.dp)) {
+        Row(modifier = Modifier.height(160.dp).padding(8.dp)) {
             // Left Image Section
             Box(
                 modifier = Modifier
                     .width(130.dp)
                     .fillMaxHeight()
+                    .clip(RoundedCornerShape(12.dp))
             ) {
                 AsyncImage(
                     model = offer.imageUrl,
@@ -353,7 +385,7 @@ fun OfferCardHorizontal(offer: OfferItem, onClick: () -> Unit, modifier: Modifie
 
                 // Pricing
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("₹${offer.price}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("₹${offer.price}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary) // Golden price
                     if (offer.originalPrice != null) {
                         Spacer(Modifier.width(6.dp))
                         Text("₹${offer.originalPrice}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -362,11 +394,11 @@ fun OfferCardHorizontal(offer: OfferItem, onClick: () -> Unit, modifier: Modifie
                     if (offer.discountBadge != null) {
                         Spacer(Modifier.width(8.dp))
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
                         ) {
-                            Text(offer.discountBadge, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = MaterialTheme.colorScheme.primary)
+                            Text("Negotiable", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
                     }
                 }
@@ -410,15 +442,15 @@ fun OfferCardHorizontal(offer: OfferItem, onClick: () -> Unit, modifier: Modifie
                     // Action Button
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        color = MaterialTheme.colorScheme.primary
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("View Details", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("View Details", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onPrimary)
                             Spacer(Modifier.width(4.dp))
-                            Icon(Icons.Filled.ArrowForward, "Go", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+                            Icon(Icons.Filled.ArrowForward, "Go", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(12.dp))
                         }
                     }
                 }
@@ -434,11 +466,34 @@ fun OfferCardHorizontal(offer: OfferItem, onClick: () -> Unit, modifier: Modifie
 
 @Composable
 fun SellerFeedScreen(
+    viewModel: HomeViewModel = hiltViewModel(),
     onDemandClick: (String) -> Unit = {}
 ) {
     var selectedCategory by remember { mutableStateOf("All") }
-    val filtered = if (selectedCategory == "All") sampleDemands
-    else sampleDemands.filter { it.category == selectedCategory }
+    val demands by viewModel.demands.collectAsState()
+    
+    val mappedDemands = demands.map { entity ->
+        DemandItem(
+            id = entity.id,
+            title = entity.title,
+            description = entity.description,
+            category = entity.category.ifEmpty { "Fashion" },
+            categoryEmoji = "👗",
+            buyerName = entity.userName,
+            buyerInitials = entity.userInitials,
+            areaName = entity.areaName,
+            cityName = entity.cityName,
+            budgetMin = null,
+            budgetMax = entity.budget,
+            offerCount = entity.offerCount,
+            isUrgent = false,
+            timeAgo = "Just now",
+            photoCount = entity.imageUrls.size
+        )
+    }
+
+    val filtered = if (selectedCategory == "All") mappedDemands
+    else mappedDemands.filter { it.category == selectedCategory }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -453,8 +508,8 @@ fun SellerFeedScreen(
                         Icon(Icons.Filled.LocationOn, "Location", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(4.dp))
                         Column {
-                            Text("Amravati", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                            Text("Rajapeth Area", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Your Location", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                            Text("Local Area", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

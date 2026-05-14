@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.apkidemand.feature.home.presentation.ChatViewModel
 
 data class ChatPreview(
     val id: String,
@@ -36,34 +38,34 @@ data class ChatPreview(
     val avatarGradient: List<Color>
 )
 
-private val sampleChats = listOf(
-    ChatPreview(
-        "c1", "Rajesh Silks", "RS", "Yes, we have that in maroon with gold zari. ₹4,500...", "2m ago", 2, "Red Banarasi Silk Saree", true,
-        listOf(Color(0xFF8B5CF6), Color(0xFF3B82F6))
-    ),
-    ChatPreview(
-        "c2", "TechZone Mobiles", "TZ", "Transparent case ready. Pick up anytime!", "15m ago", 0, "iPhone 14 Back Cover", true,
-        listOf(Color(0xFF10B981), Color(0xFF06B6D4))
-    ),
-    ChatPreview(
-        "c3", "Sweet Tooth Bakery", "ST", "Sure! 2kg chocolate truffle eggless. When do you...", "1h ago", 1, "Birthday Cake 2kg", true,
-        listOf(Color(0xFFF59E0B), Color(0xFFEF4444))
-    ),
-    ChatPreview(
-        "c4", "Fix-It-All Services", "FA", "I can start Monday. Material cost extra ₹3000.", "3h ago", 0, "Carpenter for Wardrobe", false,
-        listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
-    ),
-    ChatPreview(
-        "c5", "Priya S.", "PS", "Deal done! Will collect tomorrow. Thanks!", "1d ago", 0, "Organic Honey 500g", true,
-        listOf(Color(0xFFEC4899), Color(0xFF8B5CF6))
-    ),
-)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatsScreen(
-    userRole: String,
-    onChatClick: (String) -> Unit = {}
+    viewModel: ChatViewModel = hiltViewModel(),
+    userRole: String = "buyer",
+    onChatClick: (String) -> Unit
 ) {
+    LaunchedEffect(userRole) {
+        viewModel.fetchThreads(userRole)
+    }
+    
+    val threads by viewModel.threads.collectAsState()
+    
+    val chatPreviews = threads.map { entity ->
+        ChatPreview(
+            id = entity.id,
+            name = "User", // In real app, fetch name from users collection
+            initials = "US",
+            lastMessage = entity.lastMessage.ifEmpty { "New Message" },
+            timeAgo = "Just now",
+            unreadCount = if (userRole == "buyer") entity.buyerUnread else entity.sellerUnread,
+            demandTitle = "Demand Details", // Could fetch from demand
+            isOnline = true,
+            avatarGradient = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
@@ -120,6 +122,9 @@ fun ChatsScreen(
         }
 
         // Stats Card
+        val unreadCount = chatPreviews.count { it.unreadCount > 0 }
+        val activeCount = chatPreviews.count { it.isOnline }
+        
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -134,10 +139,10 @@ fun ChatsScreen(
                     .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(icon = Icons.Outlined.ChatBubbleOutline, iconTint = MaterialTheme.colorScheme.primary, count = "3", label = "Unread")
-                StatItem(icon = Icons.Filled.Send, iconTint = Color(0xFF3B82F6), count = "5", label = "Active")
-                StatItem(icon = Icons.Outlined.CheckCircle, iconTint = Color(0xFF10B981), count = "12", label = "Completed")
-                StatItem(icon = Icons.Outlined.BookmarkBorder, iconTint = Color(0xFFF59E0B), count = "2", label = "Archived")
+                StatItem(icon = Icons.Outlined.ChatBubbleOutline, iconTint = MaterialTheme.colorScheme.primary, count = unreadCount.toString(), label = "Unread")
+                StatItem(icon = Icons.Filled.Send, iconTint = MaterialTheme.colorScheme.secondary, count = activeCount.toString(), label = "Active")
+                StatItem(icon = Icons.Outlined.CheckCircle, iconTint = MaterialTheme.colorScheme.primary, count = chatPreviews.size.toString(), label = "Total Chats")
+                StatItem(icon = Icons.Outlined.BookmarkBorder, iconTint = MaterialTheme.colorScheme.onSurfaceVariant, count = "0", label = "Archived")
             }
         }
 
@@ -148,7 +153,7 @@ fun ChatsScreen(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            items(sampleChats, key = { it.id }) { chat ->
+            items(chatPreviews, key = { it.id }) { chat ->
                 ChatCard(chat = chat, onClick = { onChatClick(chat.id) })
             }
         }
@@ -195,7 +200,7 @@ private fun ChatCard(chat: ChatPreview, onClick: () -> Unit) {
                 }
                 
                 // Status Dot
-                val statusColor = if (chat.isOnline) Color(0xFF10B981) else Color(0xFF6B7280)
+                val statusColor = if (chat.isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)

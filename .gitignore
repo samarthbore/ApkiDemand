@@ -16,3 +16,16 @@ local.properties
 build/
 */build/
 */*/build/
+
+# Firebase
+app/google-services.json
+
+# Secrets & Keys
+*.jks
+*.keystore
+secrets.properties
+
+# Android Studio
+.idea/
+*.iml
+.gradle/

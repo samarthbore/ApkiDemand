@@ -22,9 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.apkidemand.feature.auth.OnboardingScreen
-import com.apkidemand.feature.auth.OtpVerificationScreen
-import com.apkidemand.feature.auth.PhoneInputScreen
+import com.apkidemand.feature.auth.EmailAuthScreen
 import com.apkidemand.feature.auth.ProfileSetupScreen
 import com.apkidemand.feature.home.ChatDetailScreen
 import com.apkidemand.feature.home.MainShell
@@ -43,44 +41,26 @@ fun ApkiDemandNavGraph(
         composable("splash") {
             SplashScreen(
                 onSplashComplete = {
-                    navController.navigate("onboarding") {
+                    navController.navigate("email_auth") {
                         popUpTo("splash") { inclusive = true }
                     }
                 }
             )
         }
 
-        composable("onboarding") {
-            OnboardingScreen(
-                onFinished = {
-                    navController.navigate("phone_input") {
-                        popUpTo("onboarding") { inclusive = true }
+        composable("email_auth") {
+            EmailAuthScreen(
+                onAuthSuccess = { role ->
+                    if (role != null) {
+                        navController.navigate("main/$role") {
+                            popUpTo("email_auth") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("profile_setup") {
+                            popUpTo("email_auth") { inclusive = true }
+                        }
                     }
                 }
-            )
-        }
-
-        composable("phone_input") {
-            PhoneInputScreen(
-                onSendOtp = { phone ->
-                    navController.navigate("otp_verify/$phone")
-                }
-            )
-        }
-
-        composable(
-            route = "otp_verify/{phone}",
-            arguments = listOf(navArgument("phone") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val phone = backStackEntry.arguments?.getString("phone") ?: ""
-            OtpVerificationScreen(
-                phoneNumber = phone,
-                onVerified = {
-                    navController.navigate("profile_setup") {
-                        popUpTo("phone_input") { inclusive = true }
-                    }
-                },
-                onBack = { navController.popBackStack() }
             )
         }
 
@@ -88,7 +68,7 @@ fun ApkiDemandNavGraph(
             ProfileSetupScreen(
                 onComplete = { role ->
                     navController.navigate("main/$role") {
-                        popUpTo(0) { inclusive = true }
+                        popUpTo("profile_setup") { inclusive = true }
                     }
                 },
                 onBack = { navController.popBackStack() }
@@ -110,7 +90,7 @@ fun ApkiDemandNavGraph(
                     navController.navigate("chat_detail/$chatId")
                 },
                 onLogout = {
-                    navController.navigate("onboarding") {
+                    navController.navigate("email_auth") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
@@ -170,7 +150,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF6C5CE7), Color(0xFF5A4BD1), Color(0xFF3D3580))
+                    colors = listOf(Color(0xFF166534), Color(0xFF14532D), Color(0xFF064E3B))
                 )
             ),
         contentAlignment = Alignment.Center
